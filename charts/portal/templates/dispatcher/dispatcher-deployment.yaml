@@ -72,9 +72,19 @@ spec:
              periodSeconds: 15
              successThreshold: 1
              failureThreshold: 20
+        - name: exporter
+          image: quay.io/martinhelmich/prometheus-nginxlog-exporter:v1
+          args: ["-config-file", "/etc/prometheus-nginxlog-exporter/config.hcl"]
+          volumeMounts:
+          - name: exporter-config
+            mountPath: /etc/prometheus-nginxlog-exporter
           {{- if .Values.dispatcher.resources }}
           resources: {{- toYaml .Values.dispatcher.resources | nindent 12 }}
           {{- end }}
+      volumes:
+        - name: exporter-config
+          configMap:
+            name: exporter-config
       {{- if .Values.global.pullSecret }}
       imagePullSecrets:
       - name: "{{ .Values.global.pullSecret }}"
