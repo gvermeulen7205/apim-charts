@@ -1,5 +1,4 @@
 {{ if .Values.bundle.enabled }}
-{{- $this := . -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,9 +9,9 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
-  {{- range $path, $_ :=  .Files.Glob  .Values.bundle.path }}
-  {{ $path | replace "/" "-" }}: |-
-  {{ base $path }}: |-
-{{ tpl ($this.Files.Get $path) $this | indent 4 }}
-  {{- end }}
+{{ if .Values.additionalBundles }}
+{{- range $key, $val := .Values.additionalBundles }}
+  {{ printf "%s.%s" $key "bundle" }}: {{ $val | indent 8 | quote }}
+{{- end }}
+{{ end }}
 {{ end }}

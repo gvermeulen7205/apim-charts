@@ -45,6 +45,41 @@ data:
   EXTRA_JAVA_ARGS: {{ template "gateway.javaArgs" . }}
 {{ end }}
 
+{{ if .Values.management.loadServiceAccountToken}}
+  update_service_account_token.xml: |+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <l7:Bundle xmlns:l7="http://ns.l7tech.com/2010/04/gateway-management">
+         <l7:References>
+                 <l7:Item>
+                         <l7:Name>cluster.hostname</l7:Name>
+                         <l7:Id>54902a149fa982408a818eebebd58b88</l7:Id>
+                         <l7:Type>CLUSTER_PROPERTY</l7:Type>
+                         <l7:TimeStamp>2017-11-20T18:19:27.511Z</l7:TimeStamp>
+                         <l7:Resource>
+                                 <l7:ClusterProperty id="54902a149fa982408a818eebebd58b88" version="1">
+                                         <l7:Name>k8s.serviceaccount.token</l7:Name>
+                                         <l7:Value>SERVICE_ACCOUNT_TOKEN</l7:Value>
+                                 </l7:ClusterProperty>
+                         </l7:Resource>
+                 </l7:Item>
+         </l7:References>
+         <l7:Mappings>
+                 <l7:Mapping action="NewOrUpdate" srcId="54902a149fa982408a818eebebd58b88" srcUri="http://localhost:8080/restman/1.0/clusterProperties/54902a149fa982408a818eebebd58b88" type="CLUSTER_PROPERTY">
+                         <l7:Properties>
+                                 <l7:Property key="MapBy">
+                                         <l7:StringValue>name</l7:StringValue>
+                                 </l7:Property>
+                         </l7:Properties>
+                 </l7:Mapping>
+         </l7:Mappings>
+    </l7:Bundle>
+  002_load_service_account_token.sh: |+
+    #!/bin/bash
+    SERVICE_ACCOUNT_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+    UPDATE_SERVICE_ACCOUNT_TOKEN=$(sed -e "s~SERVICE_ACCOUNT_TOKEN~${SERVICE_ACCOUNT_TOKEN}~g" /opt/docker/rc.d/base/update_service_account_token.xml)
+    echo "${UPDATE_SERVICE_ACCOUNT_TOKEN}" > ${GATEWAY_DIR}/node/default/etc/bootstrap/bundle/011_update_service_account_token.xml.req.bundle
+{{ end }}
+
 {{ if .Values.additionalEnv }}
 {{- range $key, $val := .Values.additionalEnv }}
   {{ $key }}: {{ $val | quote }}

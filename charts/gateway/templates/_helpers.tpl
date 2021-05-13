@@ -46,7 +46,7 @@ Create chart name and version as used by the chart label.
 
 {{/*
  Generate []16bit HEX
- This creates Gateway ids for bundles  
+ This creates Gateway ids for the cwp bundle
  */}}
  {{- define "gateway.cwp.hex" -}}
  {{ $hexArr := "" }}
@@ -55,6 +55,20 @@ Create chart name and version as used by the chart label.
  {{- join $hex (printf " %x" $hex) }}
  {{- end -}}
  {{- end -}}
+
+{{/*
+ Generate []16bit HEX
+ This creates Gateway ids for the trustedcerts bundle
+ */}}
+ {{- define "gateway.trustedcert.hex" -}}
+ {{ $hexArr := "" }}
+ {{- range .Values.tls.trustedCerts }}
+ {{- $hex := randAlphaNum 16 }}
+ {{- join $hex (printf " %x" $hex) }}
+ {{- end -}}
+ {{- end -}}
+
+
 
 {{/*
  Generate 16bit HEX 

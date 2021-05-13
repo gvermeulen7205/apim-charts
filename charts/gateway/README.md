@@ -52,6 +52,7 @@ The following table lists the configurable parameters of the Gateway chart and t
 | `management.restman.enabled`          | Enable/Disable the Rest Management API (Restman) | `false`  |
 | `management.username`          | Policy Manager Username | `admin`  |
 | `management.password`          | Policy Manager Password | `mypassword`  |
+| `management.loadServiceAccountToken`          | Loads the service account token from /var/run/secrets/kubernetes.io/serviceaccount/token as a cluster-wide property k8s.serviceaccount.token | `false`  |
 | `database.enabled`          | Run in DB Backed or Ephemeral Mode | `true`  |
 | `database.create`          | Deploy the MySQL stable deployment as part of this release | `true`  |
 | `database.username`          | Database Username | `gateway`  |
@@ -70,10 +71,11 @@ The following table lists the configurable parameters of the Gateway chart and t
 | `config.cwp.enabled`          | Enable/Disable settable cluster-wide properties | `false`  |
 | `config.cwp.properties`          | Set name/value pairs of cluster-wide properties | `see values.yaml`  |
 | `tls.customKey.enabled`          | Not currently implemented | `false`  |
+| `tls.trustedCerts`          | Add trusted certificates | `[]`  |
 | `additionalEnv`          | Additional environment variables you wish to pass to the Gateway Configmap | `see values.yaml`  |
 | `additionalSecret`          | Additional secret variables you wish to pass to the Gateway Secret | `see values.yaml`  |
 | `bundle.enabled`          | Create and mount an empty configMap that you can use to load policy bundles onto your Gateway | `false`  |
-| `bundle.path`          | Specify the path to the bundle files. The bundles folder in this repo has some example bundle files | `"bundles/*.bundle"`  |
+| `additionalBundles`          | Key/Value pair bundlename/bundle - total limit for all files is 1mb | `--set-file additionalBundles.mybundle=/path/to/mybundle.install.bundle`  |
 | `service.type`    | Service Type               | `LoadBalancer` |
 | `service.loadbal..`    | Additional Loadbalancer Configuration               | `see https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service` |
 | `service.ports`    | List of http external port mappings               | https: 8443 -> 8443, management: 9443->9443 |
@@ -99,6 +101,13 @@ The following table lists the configurable parameters of the Gateway chart and t
 | `readinessProbe.failureThreshold`    | Failure Threshold               | `10` |
 | `resources.limits`    | Resource Limits               | `{}` |
 | `resources.requests`    | Resource Requests              | `{}` |
+| `hostAliases`          | Gateway /etc/hosts configuration | `[]`  |
+| `nodeSelector`          | Node Selector | `nil`  |
+| `affinity`          | Affinity Settings https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/ | `{}`  |
+| `initContainers`          | Configure Init Containers | `{}`  |
+| `sidecars`          | Configure Sidecars | `{}`  |
+
+
 
 ### Exposing Additional Ports
 Add an entry under the ports section of the service section of the values.yaml file.

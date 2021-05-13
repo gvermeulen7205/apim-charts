@@ -10,7 +10,7 @@ metadata:
     heritage: {{ .Release.Service }}
 {{- $hexArr := splitList " " (include "gateway.cwp.hex" .) }}
 data:
-  cwp.bundle: |
+  012_add_cluster_properties.xml.req.bundle: |
     <l7:Bundle xmlns:l7="http://ns.l7tech.com/2010/04/gateway-management">
     <l7:References>
 {{ range $i, $v := $hexArr }}

@@ -42,6 +42,8 @@ management:
     enabled: false
   username: admin
   password: mypassword
+  # This loads the kubernetes account token as a cluster-wide property
+  loadServiceAccountToken: false
 
 # Database configuration
 database:
@@ -114,6 +116,18 @@ tls:
     enabled: false
     key:
     pass:
+  trustedCerts: []
+  
+  # trustedCerts:
+  #   - name: somesite
+  #     value: |+
+  #       -----BEGIN CERTIFICATE-----
+  #       MIIGwTCCBamgAwIBAgIMRue5sdNe8npAkHF6MA0GCSqGSIb3DQEBCwUAMEwxCzAJ
+  #       ...
+  #       LfnNIwY8XbTtM1fjCJsaA18xyS+qtfbEeqtvtnRyOFgKw0rELgHac7VXQhBbThCi
+  #       z79QKAL9SLBisWFrzZI81za0Pev12KmpZiOK9WyazZQliQz0R7d900qVI2i+UTl2
+  #       jIH3gCw=
+  #       -----END CERTIFICATE-----
 
 # Install Gateway solution kit(s) using restman.
 #   Prerequisites:
@@ -129,20 +143,22 @@ installSolutionKits:
 
 # Additional Environment variables to be added to the Gateway Configmap
 additionalEnv:
-  key1: value
+# key1: value
 # key1: value
 # key2: value
 
 # Additional Secret variables to be added to the Gateway Secret
 additionalSecret:
-  key1: value
+# key1: value
 # key1: value
 # key2: value
+
 
 # This mounts a bundle folder to the Gateway.
 bundle:
   enabled: false
-  path: "bundles/*.bundle"
+additionalBundles: {}
+  
 
 service:
   # Service Type, ClusterIP, NodePort, LoadBalancer
@@ -169,6 +185,11 @@ service:
     - name: management
       internal: 9443
       external: 9443
+  # Set Session Affinity (stickiness) on the Gateway Service
+  # sessionAffinity: ClientIP
+  # sessionAffinityConfig:
+  #   clientIP:
+  #     timeoutSeconds: 10800
   # Additional Service annotations, the example below shows configuration for an internal load balancer on GCP
   # See the docs for more ==> https://kubernetes.io/docs/concepts/services-networking/service/
   annotations: {}
@@ -228,6 +249,35 @@ readinessProbe:
   successThreshold: 1
   failureThreshold: 15
 
+
+hostAliases: []
+# - hostnames:
+#   - "apim.example.com"
+#   - "apim-ssg.example.com"
+#   - "analytics.example.com"
+#   - "broker.example.com"
+#   - "sso.example.com"
+#   - "sync.example.com"
+#   - "enroll.example.com"
+#   ip: "192.168.1.100"
+
+
+#schedulerName:
+
+# https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+nodeSelector: {}
+
+affinity: {}
+  # nodeAffinity:
+  #   requiredDuringSchedulingIgnoredDuringExecution:
+  #     nodeSelectorTerms:
+  #     - matchExpressions:
+  #       - key: kubernetes.io/e2e-az-name
+  #         operator: In
+  #         values:
+  #         - e2e-az1
+  #         - e2e-az2
+
 resources:
   # There are no resource limits set by default, this is a consicious choice for the user and
   # increases the chance of these running on environments with fewer resources available
@@ -242,6 +292,37 @@ resources:
 serviceAccount:
   # name:
   create: true
+
+
+## Add initContainers to the pod.
+## Example:
+## initContainers:
+##   - name: your-image-name
+##     image: your-image
+##     imagePullPolicy: Always
+##     ports:
+##       - name: portname
+##         containerPort: 1234
+##  
+initContainers: {}
+## Add sidecars to the pod.
+## Example:
+## sidecars:
+##   - name: your-image-name
+##     image: your-image
+##     imagePullPolicy: Always
+##     ports:
+##       - name: portname
+##         containerPort: 1234
+##
+sidecars: {}
+
+## Bootstrap start up scripts to the container Gateway (reserved for future use)
+# startScripts:
+#   enabled: true
+#   001_load_service_account_token.sh: |+
+#   #!/bin/bash
+    
 
 ##
 ## Subchart Configuration

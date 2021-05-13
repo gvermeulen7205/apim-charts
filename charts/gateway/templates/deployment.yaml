@@ -21,6 +21,18 @@ spec:
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ include "gateway.serviceAccountName" . }}
+      {{- if .Values.affinity }}
+      affinity: {{- toYaml .Values.affinity | nindent 12 }}
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{- toYaml .Values.nodeSelector | nindent 12 }}
+      {{- end }}
+      {{- if .Values.schedulerName }}
+      schedulerName: {{ .Values.schedulerName }}
+      {{- end }}
+      {{- if .Values.initContainers }}
+      initContainers: {{- toYaml .Values.initContainers | nindent 12 }}
+      {{- end }}
 {{ if .Values.image.secretName }}
       imagePullSecrets:
         - name: {{ .Values.image.secretName | quote }}
@@ -81,15 +93,33 @@ spec:
 {{ end }}
 {{ if .Values.config.cwp.enabled }}
             - name: {{ template "gateway.fullname" . }}-cwp-configmap
-              mountPath: /opt/SecureSpan/Gateway/node/default/etc/bootstrap/bundle/cwp
+              mountPath: /opt/SecureSpan/Gateway/node/default/etc/bootstrap/bundle/012_add_cluster_properties.xml.req.bundle
+              subPath: 012_add_cluster_properties.xml.req.bundle
+{{ end }}
+{{ if .Values.tls.trustedCerts }}
+            - name: {{ template "gateway.fullname" . }}-trustedcerts-configmap
+              mountPath: /opt/SecureSpan/Gateway/node/default/etc/bootstrap/bundle/013_add_trusted_certificates.xml.req.bundle
+              subPath: 013_add_trusted_certificates.xml.req.bundle
 {{ end }}
 {{ if .Values.bundle.enabled }}
             - name: {{ template "gateway.fullname" . }}-bundle-configmap
               mountPath: /opt/SecureSpan/Gateway/node/default/etc/bootstrap/bundle/configmap
 {{ end }}
+{{ if  .Values.management.loadServiceAccountToken }}
+            - name: {{ template "gateway.fullname" . }}-serviceaccounttoken-script
+              mountPath: /opt/docker/rc.d/002_load_service_account_token.sh
+              subPath: 002_load_service_account_token.sh
+            - name: {{ template "gateway.fullname" . }}-serviceaccounttoken-template
+              mountPath: /opt/docker/rc.d/base/update_service_account_token.xml
+              subPath: update_service_account_token.xml
+{{ end }}
+
 {{ if .Values.management.restman.enabled }}
             - name: {{ template "gateway.fullname" . }}-restman
               mountPath: /opt/SecureSpan/Gateway/node/default/etc/bootstrap/services/restman
+{{ end }}
+{{ if .Values.sidecars }}
+{{- toYaml .Values.sidecars | nindent 8 }}
 {{ end }}
           envFrom:
             - configMapRef:
@@ -134,6 +164,11 @@ spec:
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
             successThreshold: {{ .Values.readinessProbe.successThreshold }}
 {{ end }}
+{{ if .Values.hostAliases }}
+      hostAliases:
+{{ toYaml .Values.hostAliases | indent 12 }}
+{{ end }}
+
       volumes:
 {{ if  .Values.tls.customKey.enabled }}
         - name: {{ template "gateway.fullname" . }}-ssl
@@ -165,9 +200,18 @@ spec:
 {{ if .Values.config.cwp.enabled }}
         - name: {{ template "gateway.fullname" . }}-cwp-configmap
           configMap:
-            defaultMode: 292
-            optional: false
             name: {{ template "gateway.fullname" . }}-cwp-configmap
+            items:
+            - key: 012_add_cluster_properties.xml.req.bundle
+              path: 012_add_cluster_properties.xml.req.bundle
+{{ end }}
+{{ if .Values.tls.trustedCerts }}
+        - name: {{ template "gateway.fullname" . }}-trustedcerts-configmap
+          configMap:
+            name: {{ template "gateway.fullname" . }}-trustedcerts-configmap
+            items:
+            - key: 013_add_trusted_certificates.xml.req.bundle
+              path: 013_add_trusted_certificates.xml.req.bundle
 {{ end }}
 {{ if .Values.bundle.enabled }}
         - name: {{ template "gateway.fullname" . }}-bundle-configmap
@@ -182,6 +226,20 @@ spec:
             defaultMode: 292
             optional: false
             name: {{ template "gateway.fullname" . }}-service-metrics-configmap
+{{ end }}
+{{ if  .Values.management.loadServiceAccountToken }}
+        - name: {{ template "gateway.fullname" . }}-serviceaccounttoken-script
+          configMap:
+            name: {{ template "gateway.fullname" . }}-configmap
+            items:
+            - key: 002_load_service_account_token.sh
+              path: 002_load_service_account_token.sh
+        - name: {{ template "gateway.fullname" . }}-serviceaccounttoken-template
+          configMap:
+            name: {{ template "gateway.fullname" . }}-configmap
+            items:
+            - key: update_service_account_token.xml
+              path: update_service_account_token.xml
 {{ end }}
 {{ if .Values.management.restman.enabled }}
         - name: {{ template "gateway.fullname" . }}-restman

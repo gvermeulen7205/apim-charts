@@ -1,0 +1,86 @@
+{{ if .Values.tls.trustedCerts }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "gateway.fullname" . }}-trustedcerts-configmap
+  labels:
+    app: {{ template "gateway.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- $hexArr := splitList " " (include "gateway.trustedcert.hex" .) }}
+data:
+  013_add_trusted_certificates.xml.req.bundle: |
+    <l7:Bundle xmlns:l7="http://ns.l7tech.com/2010/04/gateway-management">
+    <l7:References>
+{{ range $i, $v := $hexArr }}
+{{ if ne $i 0 }}
+{{ with index $.Values.tls.trustedCerts (sub $i 1 )}}
+    <l7:Item>
+        <l7:Name>{{ .name }}</l7:Name>
+        <l7:Id>{{ $v }}</l7:Id>
+        <l7:Type>TRUSTED_CERT</l7:Type>
+          <l7:Resource>
+           <l7:TrustedCertificate id="{{ $v }}">
+           <l7:Name>{{ .name }}</l7:Name>
+           <l7:CertificateData>
+{{ if contains "\\n" (.value | quote)}}
+           <l7:Encoded>{{ .value | trim | indent 4 | trim | b64enc }}</l7:Encoded>
+{{ else }}
+           <l7:Encoded>{{ .value | b64enc }}</l7:Encoded>
+{{ end }}
+           </l7:CertificateData>
+          
+         <l7:Properties>
+            <l7:Property key="revocationCheckingEnabled">
+                <l7:BooleanValue>true</l7:BooleanValue>
+            </l7:Property>
+            <l7:Property key="trustAnchor">
+                 <l7:BooleanValue>true</l7:BooleanValue>
+            </l7:Property>
+            <l7:Property key="trustedAsSamlAttestingEntity">
+                <l7:BooleanValue>false</l7:BooleanValue>
+            </l7:Property>
+            <l7:Property key="trustedAsSamlIssuer">
+                <l7:BooleanValue>false</l7:BooleanValue>
+            </l7:Property>
+            <l7:Property key="trustedForSigningClientCerts">
+                <l7:BooleanValue>false</l7:BooleanValue>
+            </l7:Property>
+            <l7:Property key="trustedForSigningServerCerts">
+                <l7:BooleanValue>true</l7:BooleanValue>
+            </l7:Property>
+            <l7:Property key="trustedForSsl">
+                <l7:BooleanValue>true</l7:BooleanValue>
+            </l7:Property>
+            <l7:Property key="verifyHostname">
+                <l7:BooleanValue>false</l7:BooleanValue>
+            </l7:Property>
+         </l7:Properties>
+      </l7:TrustedCertificate>
+        </l7:Resource>
+    </l7:Item>
+{{ end }}
+{{ end }}
+{{ end }}
+    </l7:References>
+       <l7:Mappings>
+{{ range $i, $v := $hexArr }}
+{{ if ne $i 0 }}
+{{ with index $.Values.tls.trustedCerts (sub $i 1 ) }}
+        <l7:Mapping action="NewOrUpdate" srcId="{{ $v }}" type="TRUSTED_CERT">
+            <l7:Properties>
+                <l7:Property key="MapBy">
+                    <l7:StringValue>name</l7:StringValue>
+                </l7:Property>
+                <l7:Property key="MapTo">
+                    <l7:StringValue>{{ .name }}</l7:StringValue>
+                </l7:Property>
+            </l7:Properties>
+        </l7:Mapping>
+{{ end }}
+{{ end }}
+{{ end }}
+    </l7:Mappings>
+    </l7:Bundle>
+{{ end }} 
